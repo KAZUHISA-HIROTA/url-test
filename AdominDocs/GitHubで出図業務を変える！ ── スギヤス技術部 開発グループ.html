@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHubで出図業務を変える！ ── スギヤス技術部 開発グループ</title>
+  <style>
+    /* ===== リセット・基本 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Hiragino Maru Gothic Pro", "Rounded Mplus 1c", "Meiryo", sans-serif;
+      background: #f0f4f8;
+      color: #2d3748;
+      line-height: 1.8;
+    }
+
+    /* ===== ヒーローヘッダー ===== */
+    .hero {
+      background: linear-gradient(150deg, #1a365d 0%, #2b6cb0 50%, #4299e1 100%);
+      padding: 44px 20px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        45deg, rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 2px,
+        transparent 2px, transparent 20px
+      );
+    }
+    .hero-eyebrow {
+      display: inline-block;
+      background: rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.9);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+    .hero-title {
+      font-size: 1.9rem; font-weight: 900; color: white;
+      text-shadow: 0 3px 12px rgba(0,0,0,0.3);
+      line-height: 1.3; margin-bottom: 8px;
+    }
+    .hero-sub {
+      font-size: 0.95rem; color: rgba(255,255,255,0.85);
+      margin-bottom: 32px;
+    }
+
+    /* キャラクター一覧 */
+    .chars-row {
+      display: flex; justify-content: center;
+      gap: 20px; flex-wrap: wrap;
+    }
+    .char-card {
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 16px;
+      padding: 14px 18px;
+      text-align: center; color: white;
+      min-width: 110px;
+    }
+    .char-icon {
+      width: 64px; height: 64px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; margin: 0 auto 10px;
+      border: 3px solid rgba(255,255,255,0.5);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    }
+    .ci-errina  { background: linear-gradient(135deg,#f093fb,#f5576c); }
+    .ci-claude  { background: linear-gradient(135deg,#43e97b,#38f9d7); }
+    .ci-okabe   { background: linear-gradient(135deg,#4facfe,#00f2fe); }
+    .ci-mitsu   { background: linear-gradient(135deg,#f7971e,#ffd200); color:#1a202c; }
+    .ci-hirota  { background: linear-gradient(135deg,#667eea,#764ba2); }
+    .char-name { font-weight: 800; font-size: 0.95rem; }
+    .char-role { font-size: 0.72rem; opacity: 0.82; background: rgba(0,0,0,0.2); border-radius: 8px; padding: 2px 8px; margin-top: 4px; display: inline-block; }
+
+    /* ===== コンテナ ===== */
+    .container { max-width: 820px; margin: 0 auto; padding: 0 16px 48px; }
+
+    /* ===== 導入パネル ===== */
+    .intro-panel {
+      background: white;
+      border-radius: 20px;
+      padding: 28px 26px;
+      margin: -32px 12px 28px;
+      box-shadow: 0 10px 40px rgba(43,108,176,0.18);
+      position: relative; z-index: 10;
+    }
+    .intro-panel h2 {
+      font-size: 1.15rem; font-weight: 800;
+      color: #2b6cb0; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .intro-panel p { font-size: 0.9rem; color: #4a5568; margin-bottom: 16px; }
+
+    /* 現状課題ボックス */
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .prob-card {
+      background: #fff5f5;
+      border: 2px solid #fc8181;
+      border-radius: 12px; padding: 14px;
+      text-align: center;
+    }
+    .prob-card .p-icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .prob-card .p-text { font-size: 0.83rem; color: #c53030; font-weight: 600; line-height: 1.4; }
+
+    /* ===== 吹き出し ===== */
+    .chat { display: flex; flex-direction: column; gap: 14px; }
+    .balloon-row { display: flex; gap: 12px; align-items: flex-end; }
+    .balloon-row.right { flex-direction: row-reverse; }
+    .av {
+      width: 52px; height: 52px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.7rem; flex-shrink: 0;
+      border: 3px solid white;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+    .balloon {
+      position: relative; border-radius: 14px;
+      padding: 10px 14px; max-width: 75%;
+      font-size: 0.88rem; line-height: 1.65;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+    .balloon .bname {
+      font-size: 0.72rem; font-weight: 800;
+      opacity: 0.65; margin-bottom: 3px; display: block;
+    }
+    .b-eri   { background:#fff0fb; border:2px solid #f5576c; }
+    .b-oka   { background:#f0f8ff; border:2px solid #4facfe; }
+    .b-mit   { background:#fffbeb; border:2px solid #f6ad55; }
+    .b-claude{ background:#f0fff8; border:2px solid #43e97b; }
+    .b-hiro  { background:#faf5ff; border:2px solid #9f7aea; }
+    /* 矢印左 */
+    .balloon-row:not(.right) .balloon::before {
+      content:""; position:absolute; left:-11px; bottom:14px;
+      border:6px solid transparent; border-right-color:inherit;
+    }
+    /* 矢印右 */
+    .balloon-row.right .balloon::after {
+      content:""; position:absolute; right:-11px; bottom:14px;
+      border:6px solid transparent; border-left-color:inherit;
+    }
+
+    /* ===== セクション共通 ===== */
+    .section {
+      background: white; border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      margin-bottom: 28px; overflow: hidden;
+    }
+    .sec-head {
+      padding: 18px 24px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .sec-head .sc { /* step circle */
+      width: 46px; height: 46px; border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; flex-shrink: 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    .sec-head h2 { font-size: 1.1rem; font-weight: 800; color: white; }
+    .sec-head p  { font-size: 0.8rem; color: rgba(255,255,255,0.85); margin-top: 2px; }
+    .sec-body { padding: 24px; }
+
+    .h-blue   .sec-head { background: linear-gradient(135deg,#2b6cb0,#4299e1); }
+    .h-purple .sec-head { background: linear-gradient(135deg,#553c9a,#9f7aea); }
+    .h-green  .sec-head { background: linear-gradient(135deg,#276749,#48bb78); }
+    .h-orange .sec-head { background: linear-gradient(135deg,#c05621,#f6ad55); }
+    .h-pink   .sec-head { background: linear-gradient(135deg,#97266d,#ed64a6); }
+    .h-teal   .sec-head { background: linear-gradient(135deg,#234e52,#38b2ac); }
+    .h-dark   .sec-head { background: linear-gradient(135deg,#1a365d,#2b6cb0); }
+
+    /* ===== フローステップ ===== */
+    .fsteps { display: flex; flex-direction: column; }
+    .fstep {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 13px 0; border-bottom: 2px dashed #e2e8f0;
+    }
+    .fstep:last-child { border-bottom: none; }
+    .fsn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg,#2b6cb0,#4299e1);
+      color: white; font-weight: 800; font-size: 0.85rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 2px;
+    }
+    .fsc strong { display: block; font-size: 0.94rem; font-weight: 800; margin-bottom: 2px; }
+    .fsc span   { font-size: 0.83rem; color: #718096; }
+    .fs-av { font-size: 1.5rem; flex-shrink: 0; }
+
+    /* ===== コードブロック ===== */
+    .codeblock {
+      background: #1a202c; color: #e2e8f0;
+      border-radius: 12px; padding: 18px 20px;
+      font-family: "Consolas","Monaco",monospace;
+      font-size: 0.83rem; line-height: 2;
+      margin: 14px 0; overflow-x: auto;
+    }
+    .cc { color: #68d391; }
+    .ca { color: #f6ad55; }
+    .ck { color: #90cdf4; }
+    .cr { color: #fc8181; }
+    .cg { color: #68d391; font-weight: 700; }
+    .cm { color: #f093fb; }
+
+    /* ===== GitHub画面モック ===== */
+    .gh-mock {
+      background: #0d1117;
+      border-radius: 14px;
+      overflow: hidden;
+      margin: 16px 0;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+    }
+    .gh-topbar {
+      background: #161b22;
+      padding: 10px 16px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid #30363d;
+    }
+    .gh-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .gh-repo-name { color: #58a6ff; font-size: 0.85rem; font-weight: 700; font-family: monospace; margin-left: 8px; }
+    .gh-body { padding: 16px; }
+    .gh-commit-row {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0; border-bottom: 1px solid #21262d;
+      font-family: monospace; font-size: 0.8rem;
+    }
+    .gh-commit-row:last-child { border-bottom: none; }
+    .gh-av {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .gh-av-eri  { background: linear-gradient(135deg,#f093fb,#f5576c); }
+    .gh-av-mit  { background: linear-gradient(135deg,#f7971e,#ffd200); }
+    .gh-tag {
+      border-radius: 4px; padding: 1px 7px;
+      font-size: 0.7rem; font-weight: 700; white-space: nowrap;
+    }
+    .gt-ai     { background: #6e40c9; color: white; }
+    .gt-fix    { background: #b94c17; color: white; }
+    .gt-feat   { background: #1a7f37; color: white; }
+    .gt-review { background: #0969da; color: white; }
+    .gt-req    { background: #9e6a03; color: #1a202c; }
+    .gh-msg  { color: #c9d1d9; flex: 1; }
+    .gh-who  { color: #8b949e; font-size: 0.75rem; white-space: nowrap; }
+    .gh-time { color: #484f58; font-size: 0.72rem; white-space: nowrap; }
+
+    /* ===== Push/Pull タイムライン ===== */
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: "";
+      position: absolute; left: 14px; top: 0; bottom: 0;
+      width: 3px; background: linear-gradient(to bottom, #4299e1, #9f7aea, #48bb78);
+      border-radius: 2px;
+    }
+    .tl-item {
+      position: relative; margin-bottom: 18px;
+    }
+    .tl-item::before {
+      content: "";
+      position: absolute; left: -24px; top: 8px;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: white; border: 3px solid #4299e1;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.2);
+    }
+    .tl-item.push::before { border-color: #f5576c; box-shadow: 0 0 0 3px rgba(245,87,108,0.2); }
+    .tl-item.pull::before { border-color: #48bb78; box-shadow: 0 0 0 3px rgba(72,187,120,0.2); }
+    .tl-item.review::before { border-color: #9f7aea; box-shadow: 0 0 0 3px rgba(159,122,234,0.2); }
+    .tl-box {
+      border-radius: 12px; padding: 12px 16px;
+      border: 2px solid transparent;
+    }
+    .tl-item.push   .tl-box { background: #fff0fb; border-color: #f5576c; }
+    .tl-item.pull   .tl-box { background: #f0fff4; border-color: #48bb78; }
+    .tl-item.review .tl-box { background: #faf5ff; border-color: #9f7aea; }
+    .tl-box .tl-who {
+      font-size: 0.78rem; font-weight: 800;
+      margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    }
+    .tl-box .tl-who .tw-icon { font-size: 1.2rem; }
+    .tl-item.push   .tl-box .tl-who { color: #c53030; }
+    .tl-item.pull   .tl-box .tl-who { color: #276749; }
+    .tl-item.review .tl-box .tl-who { color: #553c9a; }
+    .tl-box .tl-msg { font-size: 0.86rem; color: #4a5568; }
+    .tl-box .tl-tag {
+      display: inline-block; margin-top: 5px;
+      border-radius: 4px; padding: 1px 8px;
+      font-size: 0.73rem; font-weight: 700; color: white;
+    }
+    .push-tag { background: #f5576c; }
+    .pull-tag { background: #48bb78; }
+    .review-tag { background: #9f7aea; }
+
+    /* ===== 用語カード ===== */
+    .word-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+      gap: 12px;
+    }
+    .wcard {
+      border-radius: 12px; padding: 14px;
+      text-align: center; border: 2px solid transparent;
+    }
+    .wcard .we { font-size: 2rem; margin-bottom: 6px; }
+    .wcard .wn { font-size: 0.97rem; font-weight: 800; }
+    .wcard .wen{ font-size: 0.7rem; opacity: 0.6; margin-bottom: 4px; }
+    .wcard .wd { font-size: 0.82rem; line-height: 1.5; }
+    .wc1 { background: #fff0fb; border-color: #f5576c; }
+    .wc2 { background: #f0f8ff; border-color: #4299e1; }
+    .wc3 { background: #fff8f0; border-color: #f6ad55; }
+    .wc4 { background: #f0fff8; border-color: #48bb78; }
+
+    /* ===== 比較テーブル ===== */
+    .ctable { width: 100%; border-collapse: collapse; font-size: 0.87rem; }
+    .ctable th { padding: 11px 13px; text-align: left; color: white; }
+    .th0 { background: #4a5568; }
+    .th1 { background: #c53030; }
+    .th2 { background: #276749; }
+    .ctable td { padding: 10px 13px; vertical-align: top; }
+    .ctable tr:nth-child(odd) td { background: #f7fafc; }
+    .ctable tr:nth-child(even) td { background: white; }
+    .td-bad  { color: #c53030; font-weight: 600; }
+    .td-good { color: #276749; font-weight: 600; }
+
+    /* ===== ヒントボックス ===== */
+    .hint {
+      border-radius: 12px; padding: 14px 18px; margin-top: 14px;
+    }
+    .hint.green  { background: #f0fff4; border: 2px solid #68d391; }
+    .hint.yellow { background: #fffbeb; border: 2px solid #f6e05e; }
+    .hint.red    { background: #fff5f5; border: 2px solid #fc8181; }
+    .hint.purple { background: #faf5ff; border: 2px solid #d6bcfa; }
+    .hint.blue   { background: #ebf8ff; border: 2px solid #90cdf4; }
+    .hint h3 { font-size: 0.92rem; font-weight: 800; margin-bottom: 7px; }
+    .hint.green  h3 { color: #276749; }
+    .hint.yellow h3 { color: #b7791f; }
+    .hint.red    h3 { color: #c53030; }
+    .hint.purple h3 { color: #553c9a; }
+    .hint.blue   h3 { color: #2b6cb0; }
+    .hint ul { padding-left: 18px; }
+    .hint ul li { font-size: 0.85rem; margin-bottom: 5px; color: #4a5568; }
+
+    /* ===== 全体フロー ===== */
+    .bigflow {
+      background: linear-gradient(135deg,#1a365d,#2b6cb0,#553c9a);
+      border-radius: 20px; padding: 28px 20px;
+      margin-bottom: 28px;
+    }
+    .bigflow h2 { color: white; font-size: 1.1rem; font-weight: 800; text-align: center; margin-bottom: 22px; }
+    .bf-wrap {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 8px; align-items: center;
+    }
+    .bf-box {
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.25);
+      border-radius: 12px; padding: 12px 8px;
+      text-align: center;
+    }
+    .bf-box .be { font-size: 1.7rem; margin-bottom: 5px; }
+    .bf-box .bl { font-size: 0.8rem; color: white; font-weight: 700; }
+    .bf-box .bs { font-size: 0.7rem; color: rgba(255,255,255,0.72); margin-top: 2px; }
+    .bf-ar { color: rgba(255,255,255,0.55); font-size: 1.4rem; text-align: center; }
+
+    /* ===== エンディング ===== */
+    .ending {
+      background: linear-gradient(135deg,#1a365d,#2b6cb0,#4299e1);
+      border-radius: 20px; padding: 32px 24px;
+      text-align: center; color: white; margin-bottom: 16px;
+    }
+    .ending h2 { font-size: 1.25rem; font-weight: 900; margin-bottom: 14px; }
+    .ending p  { font-size: 0.9rem; opacity: 0.9; line-height: 1.85; }
+    .footer {
+      text-align: center; font-size: 0.77rem;
+      color: #a0aec0; padding: 10px 0 28px;
+    }
+
+    /* ===== レスポンシブ ===== */
+    @media (max-width: 580px) {
+      .hero-title { font-size: 1.4rem; }
+      .chars-row { gap: 10px; }
+      .char-card { min-width: 90px; padding: 10px 12px; }
+      .bf-wrap { grid-template-columns: 1fr; }
+      .bf-ar { transform: rotate(90deg); }
+      .balloon { max-width: 82%; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== ヒーロー ========== -->
+<div class="hero">
+  <div class="hero-eyebrow">🏭 株式会社スギヤス｜技術部 開発グループ</div>
+  <div class="hero-title">🐙 GitHubで<br>改造・出図業務を変えよう！</div>
+  <div class="hero-sub">改造図面の電子化・自動出図をチームで管理する仕組みづくり</div>
+
+  <div class="chars-row">
+    <div class="char-card">
+      <div class="char-icon ci-hirota">👔</div>
+      <div class="char-name">廣田さん</div>
+      <div class="char-role">開発マネージャー</div>
+    </div>
+    <div class="char-card">
+      <div class="char-icon ci-errina">👩‍💻</div>
+      <div class="char-name">映里奈さん</div>
+      <div class="char-role">プログラム開発担当</div>
+    </div>
+    <div class="char-card">
+      <div class="char-icon ci-claude">🤖</div>
+      <div class="char-name">Claude</div>
+      <div class="char-role">AI コード生成</div>
+    </div>
+    <div class="char-card">
+      <div class="char-icon ci-okabe">🙋‍♂️</div>
+      <div class="char-name">岡部くん</div>
+      <div class="char-role">出図業務 利用者</div>
+    </div>
+    <div class="char-card">
+      <div class="char-icon ci-mitsu">👷</div>
+      <div class="char-name">光博さん</div>
+      <div class="char-role">改造設計 利用者</div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ========== 導入：現状の課題 ========== -->
+<div class="intro-panel">
+  <h2>⚠️ 今、こんな困りごとが起きていませんか？</h2>
+  <p>スギヤスの改造業務・出図業務では、こんな問題が日常的に発生しています——</p>
+
+  <div class="problem-grid">
+    <div class="prob-card">
+      <div class="p-icon">📄</div>
+      <div class="p-text">改造図面が各自のPCに散在して最新版がわからない</div>
+    </div>
+    <div class="prob-card">
+      <div class="p-icon">📧</div>
+      <div class="p-text">出図のたびにメール添付で送り合っている</div>
+    </div>
+    <div class="prob-card">
+      <div class="p-icon">🔄</div>
+      <div class="p-text">岡部くんと光博さんが別々のバージョンを使ってしまう</div>
+    </div>
+    <div class="prob-card">
+      <div class="p-icon">😱</div>
+      <div class="p-text">どの修正でバグが入ったか追えない</div>
+    </div>
+  </div>
+
+  <!-- マンガ会話 -->
+  <div class="chat" style="margin-top:22px;">
+    <div class="balloon-row">
+      <div class="av ci-okabe">🙋‍♂️</div>
+      <div class="balloon b-oka">
+        <span class="bname">岡部くん（出図担当）</span>
+        映里奈さん！自動出図ツールの最新版ってどのファイルですか？<br>
+        <code>auto_shutsuzu_v3_最終.py</code> でいいんでしたっけ…？
+      </div>
+    </div>
+    <div class="balloon-row right">
+      <div class="av ci-errina">👩‍💻</div>
+      <div class="balloon b-eri">
+        <span class="bname">映里奈さん（開発担当）</span>
+        あ、それ古いです！昨日 <code>v4_修正済み2.py</code> を送ったはずなんですが…😅
+      </div>
+    </div>
+    <div class="balloon-row">
+      <div class="av ci-mitsu">👷</div>
+      <div class="balloon b-mit">
+        <span class="bname">光博さん（改造設計担当）</span>
+        えっ、僕はまだ <code>v2</code> を使ってました。どれが正しいの…？🤔
+      </div>
+    </div>
+    <div class="balloon-row right">
+      <div class="av ci-hirota">👔</div>
+      <div class="balloon b-hiro">
+        <span class="bname">廣田マネージャー</span>
+        これを解決するために <strong>GitHub</strong> を導入しよう！<br>
+        「共有の引き出し」を1つ作って、全員そこを見るようにすれば解決できる。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 用語4つ ========== -->
+<div class="section h-blue">
+  <div class="sec-head">
+    <div class="sc">📖</div>
+    <div>
+      <h2>まず覚える言葉は4つだけ！</h2>
+      <p>この4つを知れば GitHub は使えます</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <div class="word-grid">
+      <div class="wcard wc1">
+        <div class="we">📦</div>
+        <div class="wn">リポジトリ</div>
+        <div class="wen">Repository</div>
+        <div class="wd">全員が使う<strong>「共有の引き出し」</strong><br>出図ツール・改造プログラムをまとめて入れる箱</div>
+      </div>
+      <div class="wcard wc2">
+        <div class="we">📝</div>
+        <div class="wn">コミット</div>
+        <div class="wen">Commit</div>
+        <div class="wd">変更を<strong>「メモ付きでセーブ」</strong><br>いつ・何を変えたかが永久に残る</div>
+      </div>
+      <div class="wcard wc3">
+        <div class="we">⬆️</div>
+        <div class="wn">プッシュ</div>
+        <div class="wen">Push</div>
+        <div class="wd">修正を<strong>「引き出しに送る」</strong><br>映里奈さんが押すと全員に届く</div>
+      </div>
+      <div class="wcard wc4">
+        <div class="we">⬇️</div>
+        <div class="wn">プル</div>
+        <div class="wen">Pull</div>
+        <div class="wd">最新版を<strong>「引き出しから受け取る」</strong><br>岡部くん・光博さんが押すと最新になる</div>
+      </div>
+    </div>
+
+    <div class="chat" style="margin-top:20px; padding-top:18px; border-top:2px dashed #e2e8f0;">
+      <div class="balloon-row">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん</span>
+          私が修正したら「プッシュ」して引き出しに入れます。<br>
+          岡部くんと光博さんは「プル」して取り出すだけ！
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-okabe">🙋‍♂️</div>
+        <div class="balloon b-oka">
+          <span class="bname">岡部くん</span>
+          じゃあもうメール確認しなくていいんだ！「プル」したら絶対最新版なんですね！
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-mitsu">👷</div>
+        <div class="balloon b-mit">
+          <span class="bname">光博さん</span>
+          バージョン番号のファイル名地獄から解放される…！😭✨
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 1: リポジトリ作成 ========== -->
+<div class="section h-purple">
+  <div class="sec-head">
+    <div class="sc">1️⃣</div>
+    <div>
+      <h2>STEP 1：共有の引き出し（リポジトリ）を作る</h2>
+      <p>廣田マネージャーと映里奈さんがGitHubに箱を用意する</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <div class="chat" style="margin-bottom:18px;">
+      <div class="balloon-row">
+        <div class="av ci-hirota">👔</div>
+        <div class="balloon b-hiro">
+          <span class="bname">廣田マネージャー</span>
+          映里奈さん、GitHub にプロジェクトを作ってください。<br>
+          名前は <code>sugiyasu-kaizo-shutsuzu</code>（改造・出図管理）でどうでしょう。<br>
+          社外秘なので <strong>Private（非公開）</strong> 設定で。
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん</span>
+          了解です！作成しました。岡部くんと光博さんをコラボレーターとして招待しますね。
+        </div>
+      </div>
+    </div>
+
+    <div class="fsteps">
+      <div class="fstep">
+        <div class="fsn">1</div>
+        <div class="fsc">
+          <strong>GitHub（https://github.com）にログイン → 右上「＋」→「New repository」</strong>
+          <span>映里奈さんが操作する</span>
+        </div>
+        <div class="fs-av">👩‍💻</div>
+      </div>
+      <div class="fstep">
+        <div class="fsn">2</div>
+        <div class="fsc">
+          <strong>リポジトリ名：<code>sugiyasu-kaizo-shutsuzu</code></strong>
+          <span>改造業務・自動出図プログラムを管理するプロジェクト名</span>
+        </div>
+        <div class="fs-av">📦</div>
+      </div>
+      <div class="fstep">
+        <div class="fsn">3</div>
+        <div class="fsc">
+          <strong>「Private（非公開）」を必ず選択 🔒</strong>
+          <span>社内の改造図面・出図プログラムは外部に漏れてはいけない</span>
+        </div>
+        <div class="fs-av">🔒</div>
+      </div>
+      <div class="fstep">
+        <div class="fsn">4</div>
+        <div class="fsc">
+          <strong>岡部くん・光博さんをコラボレーターとして招待</strong>
+          <span>Settings → Collaborators → メールアドレスで招待 → 承認したらアクセス可能</span>
+        </div>
+        <div class="fs-av">👥</div>
+      </div>
+    </div>
+
+    <div class="chat" style="margin-top:16px;">
+      <div class="balloon-row">
+        <div class="av ci-okabe">🙋‍♂️</div>
+        <div class="balloon b-oka">
+          <span class="bname">岡部くん</span>
+          招待メール来ました！承認したらリポジトリ見えるようになりました👀
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-mitsu">👷</div>
+        <div class="balloon b-mit">
+          <span class="bname">光博さん</span>
+          僕も見えます！なんか…プロっぽい！😄
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 2: Claude生成・初回登録 ========== -->
+<div class="section h-green">
+  <div class="sec-head">
+    <div class="sc">2️⃣</div>
+    <div>
+      <h2>STEP 2：Claudeで自動出図ツールを作って登録</h2>
+      <p>映里奈さんがAIと一緒にプログラムを作り、最初の登録をする</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <div class="chat" style="margin-bottom:16px;">
+      <div class="balloon-row">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん → Claude</span>
+          改造仕様書のExcelを読み込んで、図番・品名・改造内容を自動でCAD出図リストに変換するPythonプログラムを作って。
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-claude">🤖</div>
+        <div class="balloon b-claude">
+          <span class="bname">Claude（AI）</span>
+          了解です！<code>auto_shutsuzu.py</code> を生成しました。<br>
+          Excelの仕様書を読み込んで出図リストCSVを自動出力します 🎉
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん</span>
+          少し手直しして…OK！VS Code からGitHubに登録（プッシュ）します！
+        </div>
+      </div>
+    </div>
+
+    <div class="codeblock">
+<span class="cc"># 初回登録の手順（VS Code GUIで操作）</span>
+
+<span class="ca">①</span> VS Code でプロジェクトフォルダを開く
+   　フォルダ構成例：
+   　📁 sugiyasu-kaizo-shutsuzu/
+   　　├── auto_shutsuzu.py      ← 自動出図メインプログラム
+   　　├── kaizo_template.xlsx   ← 改造仕様書テンプレート
+   　　└── README.md             ← 使い方説明
+<span class="ca">②</span> 左サイドバー「ソース管理」アイコンをクリック
+<span class="ca">③</span> 「リポジトリの初期化」→「GitHub に発行」を選択
+<span class="ca">④</span> sugiyasu-kaizo-shutsuzu を選んで完了
+<span class="cg">✅ GitHub の引き出しにプログラムが入った！</span>
+    </div>
+
+    <!-- GitHub画面モック：初回コミット -->
+    <div class="gh-mock">
+      <div class="gh-topbar">
+        <div class="gh-dot" style="background:#ff5f57;"></div>
+        <div class="gh-dot" style="background:#febc2e; margin-left:6px;"></div>
+        <div class="gh-dot" style="background:#28c840; margin-left:6px;"></div>
+        <span class="gh-repo-name">sugiyasu / sugiyasu-kaizo-shutsuzu</span>
+      </div>
+      <div class="gh-body">
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-ai">AI生成</span>
+          <span class="gh-msg">自動出図ツール 初版（Claude生成）</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">今日 10:23</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 3: プッシュ（映里奈→GitHub） ========== -->
+<div class="section h-orange">
+  <div class="sec-head">
+    <div class="sc">3️⃣</div>
+    <div>
+      <h2>STEP 3：映里奈さんが修正して「プッシュ」</h2>
+      <p>修正のたびにコミット＆プッシュ。これが毎日のルーティン</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <div class="chat" style="margin-bottom:16px;">
+      <div class="balloon-row">
+        <div class="av ci-okabe">🙋‍♂️</div>
+        <div class="balloon b-oka">
+          <span class="bname">岡部くん</span>
+          映里奈さん！リフト改造の出図で、図番の桁数が8桁じゃなくて10桁になったんですが、対応してもらえますか？
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん</span>
+          わかりました！Claudeに修正してもらってすぐGitHubに上げますね。
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-claude">🤖</div>
+        <div class="balloon b-claude">
+          <span class="bname">Claude（AI）</span>
+          図番の桁数を10桁に対応する修正コードを生成しました。<br>
+          <code>format_zouban()</code> 関数の桁数チェックを修正済みです ✅
+        </div>
+      </div>
+    </div>
+
+    <div class="codeblock">
+<span class="cc"># 映里奈さんの作業（修正 → コミット → プッシュ）</span>
+
+<span class="ck">【1. 修正】</span>
+  VS Code で auto_shutsuzu.py を開く
+  Claude の修正コードをテキストで貼り付け・手直し
+  ファイルを保存（Ctrl+S）
+         ↓
+<span class="ck">【2. コミット（セーブ）📝】</span>
+  VS Code 左「ソース管理」を開く
+  → 変更ファイル auto_shutsuzu.py が表示される
+  → メッセージ欄に入力：
+     「図番桁数を10桁対応に修正（岡部くん要望）」
+  → 「コミット」ボタンをクリック
+         ↓
+<span class="ck">【3. プッシュ（送信）⬆️】</span>
+  「同期（プッシュ）」ボタンをクリック
+         ↓
+<span class="cg">✅ GitHub の引き出しに最新版が入った！</span>
+<span class="cg">✅ 岡部くんと光博さんに届く準備完了！</span>
+    </div>
+
+    <p style="font-weight:800; margin:18px 0 10px; color:#c05621;">📌 コミットメッセージの実例（スギヤス業務版）</p>
+    <!-- GitHub画面モック：コミット履歴 -->
+    <div class="gh-mock">
+      <div class="gh-topbar">
+        <div class="gh-dot" style="background:#ff5f57;"></div>
+        <div class="gh-dot" style="background:#febc2e; margin-left:6px;"></div>
+        <div class="gh-dot" style="background:#28c840; margin-left:6px;"></div>
+        <span class="gh-repo-name">sugiyasu / sugiyasu-kaizo-shutsuzu ── Commits</span>
+      </div>
+      <div class="gh-body">
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-fix">バグ修正</span>
+          <span class="gh-msg">図番桁数を10桁対応に修正（岡部くん要望）</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">今日 14:05</span>
+        </div>
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-feat">機能追加</span>
+          <span class="gh-msg">搬送機改造対応：コンベア品番の自動採番を追加</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">昨日 16:30</span>
+        </div>
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-req">光博さん要望</span>
+          <span class="gh-msg">改造仕様書テンプレート v2 対応（新フォーマット）</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">2日前 11:10</span>
+        </div>
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-review">廣田確認済</span>
+          <span class="gh-msg">出図リスト出力フォーマット変更 ── 廣田MGR承認済み ✅</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">3日前 09:45</span>
+        </div>
+        <div class="gh-commit-row">
+          <div class="gh-av gh-av-eri">👩‍💻</div>
+          <span class="gh-tag gt-ai">AI生成</span>
+          <span class="gh-msg">自動出図ツール 初版（Claude生成）</span>
+          <span class="gh-who">映里奈</span>
+          <span class="gh-time">5日前 10:23</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hint green">
+      <h3>💡 コミットメッセージのコツ（スギヤス版）</h3>
+      <ul>
+        <li>「誰の要望で変えたか」を書くと後で責任の所在がわかる（例：岡部くん要望、光博さん要望）</li>
+        <li>「AI生成」「廣田確認済」などのタグをつけると管理しやすい</li>
+        <li>これで <strong>「どのバージョンがどの改造案件に対応しているか」</strong> が一目でわかる</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 4: プル（岡部・光博） ========== -->
+<div class="section h-teal">
+  <div class="sec-head">
+    <div class="sc">4️⃣</div>
+    <div>
+      <h2>STEP 4：岡部くん・光博さんが「プル」して受け取る</h2>
+      <p>ボタン1つで最新版が手に入る。メール確認は不要！</p>
+    </div>
+  </div>
+  <div class="sec-body">
+
+    <!-- Push/Pull タイムライン -->
+    <div class="timeline">
+      <div class="tl-item push">
+        <div class="tl-box">
+          <div class="tl-who">
+            <span class="tw-icon">👩‍💻</span>
+            映里奈さん → GitHub へ「プッシュ」⬆️
+          </div>
+          <div class="tl-msg">
+            「図番桁数を10桁対応に修正」を GitHub の引き出しに送信。<br>
+            VS Code の「同期」ボタンを1回押すだけ。
+          </div>
+          <span class="tl-tag push-tag">⬆️ PUSH 完了</span>
+        </div>
+      </div>
+
+      <div class="tl-item pull">
+        <div class="tl-box">
+          <div class="tl-who">
+            <span class="tw-icon">🙋‍♂️</span>
+            岡部くん → GitHub から「プル」⬇️
+          </div>
+          <div class="tl-msg">
+            VS Code の「同期（プル）」ボタンを押す → 自動で最新の <code>auto_shutsuzu.py</code> がダウンロードされる。<br>
+            <strong>メール確認不要・添付ファイル不要・バージョン確認不要！</strong>
+          </div>
+          <span class="tl-tag pull-tag">⬇️ PULL 完了（岡部くん）</span>
+        </div>
+      </div>
+
+      <div class="tl-item pull">
+        <div class="tl-box">
+          <div class="tl-who">
+            <span class="tw-icon">👷</span>
+            光博さん → GitHub から「プル」⬇️
+          </div>
+          <div class="tl-msg">
+            光博さんも同じく VS Code の「同期」ボタンを押すだけ。<br>
+            <strong>岡部くんと光博さんは必ず同じ最新版を使うことができる！</strong>
+          </div>
+          <span class="tl-tag pull-tag">⬇️ PULL 完了（光博さん）</span>
+        </div>
+      </div>
+
+      <div class="tl-item review">
+        <div class="tl-box">
+          <div class="tl-who">
+            <span class="tw-icon">👔</span>
+            廣田マネージャー → GitHub で変更内容をレビュー 👁
+          </div>
+          <div class="tl-msg">
+            GitHub のコミット履歴を見るだけで、誰が何をいつ変えたかが一目でわかる。<br>
+            重要な変更はプルリクエストで承認フローを設けることも可能。
+          </div>
+          <span class="tl-tag review-tag">👁 マネージャーレビュー</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat" style="margin-top:20px;">
+      <div class="balloon-row">
+        <div class="av ci-okabe">🙋‍♂️</div>
+        <div class="balloon b-oka">
+          <span class="bname">岡部くん</span>
+          プルしたら自動で最新版になった！<br>
+          図番10桁もちゃんと動いてる！✨ もうメール探さなくていい！
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-mitsu">👷</div>
+        <div class="balloon b-mit">
+          <span class="bname">光博さん</span>
+          僕も同じ操作で最新版入った！<br>
+          岡部くんと僕が別バージョン使う問題がなくなった！😭✨
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-hirota">👔</div>
+        <div class="balloon b-hiro">
+          <span class="bname">廣田マネージャー</span>
+          GitHub の履歴を見るだけで何が変わったかわかる。<br>
+          これで出図ミスの原因追跡も格段に楽になるね！
+        </div>
+      </div>
+    </div>
+
+    <div class="hint blue" style="margin-top:4px;">
+      <h3>🔔 プッシュ・プルのポイント（複数人利用）</h3>
+      <ul>
+        <li><strong>映里奈さんがプッシュ</strong>した瞬間から、岡部くん・光博さんは最新版をプルできる状態になる</li>
+        <li>プルの操作は岡部くんと光博さんで<strong>独立して行える</strong>。どちらかが先にプルしても問題ない</li>
+        <li>岡部くんがプルしていない間に光博さんがプルしても、どちらも同じ最新版が手に入る</li>
+        <li>廣田マネージャーはプルしなくてもGitHub画面から最新の変更内容を確認できる</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ========== STEP 5: 変更履歴・バグ対応 ========== -->
+<div class="section h-pink">
+  <div class="sec-head">
+    <div class="sc">5️⃣</div>
+    <div>
+      <h2>STEP 5：バグ発生！でも履歴があれば即対応</h2>
+      <p>いつでも過去のバージョンに戻せる。ゲームのセーブデータ感覚で</p>
+    </div>
+  </div>
+  <div class="sec-body">
+    <div class="chat" style="margin-bottom:16px;">
+      <div class="balloon-row">
+        <div class="av ci-mitsu">👷</div>
+        <div class="balloon b-mit">
+          <span class="bname">光博さん</span>
+          あれ！？さっきプルしたら搬送機の改造図番の採番が壊れてる！😱<br>
+          昨日は動いてたのに…
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-errina">👩‍💻</div>
+        <div class="balloon b-eri">
+          <span class="bname">映里奈さん</span>
+          GitHub のコミット履歴を確認します！<br>
+          …あった！「搬送機改造対応」の修正で影響が出てますね。<br>
+          すぐ1個前のバージョンに戻します！
+        </div>
+      </div>
+      <div class="balloon-row">
+        <div class="av ci-okabe">🙋‍♂️</div>
+        <div class="balloon b-oka">
+          <span class="bname">岡部くん</span>
+          もう直った！プルしたら正常に動いてる。<br>
+          原因特定から復旧まで…5分でできた！😲
+        </div>
+      </div>
+      <div class="balloon-row right">
+        <div class="av ci-hirota">👔</div>
+        <div class="balloon b-hiro">
+          <span class="bname">廣田マネージャー</span>
+          GitHubの履歴があれば「どの修正で壊れたか」が一目瞭然だね。<br>
+          従来だったら犯人探しに半日かかってたやつだ。
+        </div>
+      </div>
+    </div>
+
+    <div class="codeblock">
+<span class="cc"># バグ発生 → 復旧の手順</span>
+
+<span class="ck">【1. 履歴確認】</span>
+  GitHub のリポジトリページ → 「Commits」をクリック
+  → 全コミット履歴が時系列で表示される
+  → 壊れたタイミングの修正が一目でわかる
+
+<span class="ck">【2. 変更差分の確認】</span>
+  問題のコミットをクリック
+  → 何行目を何から何に変えたかが
+  　 赤（削除）・緑（追加）で表示される
+
+<span class="ck">【3. 一個前のバージョンに戻す】</span>
+  「Revert（元に戻す）」を選択
+  → 映里奈さんがプッシュ
+  → 岡部くん・光博さんがプル
+<span class="cg">✅ 5分で正常なバージョンに復旧完了！</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 全体フロー図 ========== -->
+<div class="bigflow">
+  <h2>🗺️ スギヤス出図業務 ── GitHub活用の全体像</h2>
+  <div class="bf-wrap">
+    <div class="bf-box">
+      <div class="be">👩‍💻</div>
+      <div class="bl">映里奈さん</div>
+      <div class="bs">Claudeで生成・修正</div>
+    </div>
+    <div class="bf-ar">→</div>
+    <div class="bf-box">
+      <div class="be">📝</div>
+      <div class="bl">コミット</div>
+      <div class="bs">メモ付きセーブ</div>
+    </div>
+    <div class="bf-ar">→</div>
+    <div class="bf-box">
+      <div class="be">⬆️</div>
+      <div class="bl">プッシュ</div>
+      <div class="bs">GitHubへ送信</div>
+    </div>
+    <div class="bf-ar">→</div>
+    <div class="bf-box">
+      <div class="be">📦</div>
+      <div class="bl">GitHub</div>
+      <div class="bs">共有の引き出し</div>
+    </div>
+    <div class="bf-ar">→</div>
+    <div class="bf-box">
+      <div class="be">⬇️</div>
+      <div class="bl">プル</div>
+      <div class="bs">最新版を受け取る</div>
+    </div>
+    <div class="bf-ar">→</div>
+    <div class="bf-box">
+      <div class="be">🙋‍♂️👷</div>
+      <div class="bl">岡部・光博</div>
+      <div class="bs">常に同じ最新版</div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 比較テーブル ========== -->
+<div class="section h-dark">
+  <div class="sec-head">
+    <div class="sc">📊</div>
+    <div>
+      <h2>導入前 vs 導入後の比較</h2>
+      <p>スギヤスの出図・改造業務でここが変わる</p>
+    </div>
+  </div>
+  <div class="sec-body" style="padding:0; overflow-x:auto;">
+    <table class="ctable">
+      <thead>
+        <tr>
+          <th class="th0" style="width:28%;">場面</th>
+          <th class="th1">GitHub 導入前 ❌</th>
+          <th class="th2">GitHub 導入後 ✅</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>最新版の共有</strong></td>
+          <td class="td-bad">映里奈さんがメール添付で岡部・光博に送る</td>
+          <td class="td-good">映里奈さんがプッシュ → 2人がプルするだけ</td>
+        </tr>
+        <tr>
+          <td><strong>バージョン管理</strong></td>
+          <td class="td-bad">auto_shutsuzu_v4_最終2.py…</td>
+          <td class="td-good">コミット履歴で全履歴を自動管理</td>
+        </tr>
+        <tr>
+          <td><strong>岡部くんと光博さんが別バージョンを使う問題</strong></td>
+          <td class="td-bad">発生しやすい。気づかず作業継続</td>
+          <td class="td-good">プルすれば必ず同一バージョン。問題ゼロ</td>
+        </tr>
+        <tr>
+          <td><strong>バグ発生時の原因追跡</strong></td>
+          <td class="td-bad">どのファイルが原因か調査に半日</td>
+          <td class="td-good">コミット履歴から即特定。5分で復旧</td>
+        </tr>
+        <tr>
+          <td><strong>AI生成コードの管理</strong></td>
+          <td class="td-bad">どこがClaude生成か不明</td>
+          <td class="td-good">コミットメッセージに「AI生成」と明示</td>
+        </tr>
+        <tr>
+          <td><strong>廣田MGRのレビュー</strong></td>
+          <td class="td-bad">都度ファイルをメールで送ってもらう</td>
+          <td class="td-good">GitHub 画面で全変更履歴を随時確認</td>
+        </tr>
+        <tr>
+          <td><strong>改造案件との紐付け</strong></td>
+          <td class="td-bad">どのバージョンがどの案件対応か不明</td>
+          <td class="td-good">コミットメッセージに案件名を記載して追跡可</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== エンディング ========== -->
+<div class="ending">
+  <h2>🎉 まとめ：出図業務がこう変わる</h2>
+  <p>
+    映里奈さんが <strong>Claude でプログラムを生成・修正</strong> して、<br>
+    <strong>「コミット → プッシュ」</strong> するだけ。<br><br>
+    岡部くんも光博さんも <strong>「プル」</strong> するだけで、<br>
+    <strong>常に同じ最新版の自動出図ツールを使える。</strong><br><br>
+    廣田マネージャーはいつでも GitHub で<strong>全変更履歴を確認・承認</strong>できる。<br><br>
+    ファイル名地獄・メール添付地獄・バージョン迷子 から解放！<br>
+    <strong>スギヤスの改造・出図業務が、チームとして動き出す。</strong>
+  </p>
+</div>
+
+</div><!-- /container -->
+
+<div class="footer">
+  株式会社スギヤス｜技術部 開発グループ ／ GitHub活用概要資料 ／ 2026年5月
+</div>
+
+</body>
+</html>
