@@ -6,7 +6,7 @@ GitHub Pages を使った HTML 公開のテスト場です。
 
 ## 📄 公開資料
 
-### 👉 [出図改善](https://kazuhisa-hirota.github.io/url-test/AdominDocs/GitHubで出図業務を変える！ ── スギヤス技術部 開発グループ.html)
+### 👉 [出図改善](https://kazuhisa-hirota.github.io/url-test/AdominDocs/GitHubで出図業務を変える！──スギヤス技術部 開発グループ.html)
 
 GitHub を活用した出図業務の改善提案資料です。
 
